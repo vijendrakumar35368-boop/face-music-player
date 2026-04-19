@@ -1,0 +1,738 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition Music Player</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 30px;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-section {
+            text-align: center;
+        }
+
+        .video-section label {
+            display: block;
+            color: #555;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        #video {
+            width: 100%;
+            border-radius: 15px;
+            background: #000;
+            border: 3px solid #667eea;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            min-width: 120px;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f093fb;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #e07de0;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .music-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        .music-section h2 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .mood-display {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            border-left: 5px solid #667eea;
+        }
+
+        .mood-display h3 {
+            color: #666;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .mood-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            text-transform: capitalize;
+        }
+
+        .confidence {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 8px;
+        }
+
+        .now-playing {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border-left: 5px solid #f093fb;
+        }
+
+        .now-playing label {
+            display: block;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 0.95em;
+            text-transform: uppercase;
+        }
+
+        .now-playing-text {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+            text-align: center;
+        }
+
+        audio {
+            width: 100%;
+            margin-top: 15px;
+            border-radius: 8px;
+        }
+
+        .playlist {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .playlist label {
+            display: block;
+            color: #666;
+            font-weight: 600;
+            margin-bottom: 15px;
+            font-size: 0.95em;
+            text-transform: uppercase;
+        }
+
+        .mood-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .mood-btn {
+            padding: 15px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95em;
+        }
+
+        .mood-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .mood-btn.active {
+            border-color: #667eea;
+            background: #667eea;
+            color: white;
+        }
+
+        .mood-btn.sad {
+            color: #4a5f9f;
+        }
+
+        .mood-btn.neutral {
+            color: #a0a0a0;
+        }
+
+        .mood-btn.happy {
+            color: #f39c12;
+        }
+
+        .mood-btn.angry {
+            color: #e74c3c;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4f8;
+            border-radius: 8px;
+            color: #333;
+            font-size: 0.95em;
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+
+        .status.error {
+            background: #f8e8e8;
+            border-left-color: #e74c3c;
+        }
+
+        .animations {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .emoji {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎵 Face Music Player 🎵</h1>
+            <p>Smile, frown, and your music changes with your mood!</p>
+        </div>
+
+        <div class="content">
+            <!-- Video Section -->
+            <div class="video-section">
+                <label for="video">📹 Your Camera</label>
+                <video id="video" autoplay muted playsinline></video>
+                <canvas id="canvas"></canvas>
+
+                <div class="controls">
+                    <button class="btn btn-primary" id="startBtn" onclick="startCamera()">Start Camera</button>
+                    <button class="btn btn-secondary" id="stopBtn" onclick="stopCamera()" disabled>Stop Camera</button>
+                </div>
+
+                <div class="status" id="status">
+                    📢 Click "Start Camera" to begin
+                </div>
+            </div>
+
+            <!-- Music Section -->
+            <div class="music-section">
+                <h2>🎶 Music Control</h2>
+
+                <!-- Mood Display -->
+                <div class="mood-display">
+                    <h3>Detected Mood</h3>
+                    <div class="emoji" id="moodEmoji">😐</div>
+                    <div class="mood-value" id="moodText">Waiting...</div>
+                    <div class="confidence" id="moodConfidence"></div>
+                </div>
+
+                <!-- Now Playing -->
+                <div class="now-playing">
+                    <label>Now Playing</label>
+                    <div class="now-playing-text" id="nowPlayingText">Nothing yet...</div>
+                    <audio id="audioPlayer" controls></audio>
+                </div>
+
+                <!-- Playlist -->
+                <div class="playlist">
+                    <label>🎯 Manual Mood Selection</label>
+                    <div class="mood-buttons">
+                        <button class="mood-btn sad" onclick="playMood('sad')">😢 Sad</button>
+                        <button class="mood-btn neutral" onclick="playMood('neutral')">😐 Calm</button>
+                        <button class="mood-btn happy" onclick="playMood('happy')">😊 Happy</button>
+                        <button class="mood-btn angry" onclick="playMood('angry')">😠 Angry</button>
+                    </div>
+                </div>
+
+                <!-- YouTube Music Section -->
+                <div class="playlist" style="margin-top: 20px;">
+                    <label>🎬 YouTube Music</label>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="text" id="youtubeUrl" placeholder="Paste YouTube URL here..."
+                            style="flex: 1; padding: 10px; border: 2px solid #ddd; border-radius: 8px; font-size: 0.95em;">
+                        <button class="btn btn-primary" style="flex: 0.5;" onclick="playYoutubeMusic()">▶️ Play</button>
+                    </div>
+                    <div style="font-size: 0.85em; color: #999; margin-bottom: 15px;">
+                        📝 Paste any YouTube link and click Play
+                    </div>
+
+                    <!-- Quick YouTube Links -->
+                    <div
+                        style="font-weight: 600; color: #666; margin-bottom: 10px; font-size: 0.9em; text-transform: uppercase;">
+                        ⭐ Saved Links</div>
+                    <button class="mood-btn" onclick="playQuickYoutube('lal-si0A1rY')"
+                        style="width: 100%; border-color: #667eea; background: #f0f4ff; color: #667eea; margin-bottom: 8px;">🎵
+                        Song 1</button>
+                    <button class="mood-btn" onclick="playQuickYoutube('eVQ_YXv_bmc')"
+                        style="width: 100%; border-color: #667eea; background: #f0f4ff; color: #667eea;">🎵 Song
+                        2</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Face-api.js Library -->
+    <script async src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js"></script>
+
+    <script>
+        // Music database for different moods
+        const musicDatabase = {
+            sad: [
+                { name: '🎵 Sad Song', url: 'youtube:fA25PBt-hgU', emoji: '🎵' },
+            ],
+            neutral: [
+                { name: '🎵 Neutral Song', url: 'youtube:XJmm3cIimWo', emoji: '🎵' },
+            ],
+            happy: [
+                { name: '🎵 Song 2 (Happy)', url: 'youtube:eVQ_YXv_bmc', emoji: '🎵' },
+            ],
+            angry: [
+                { name: '🎵 Song 2 (Angry)', url: 'youtube:eVQ_YXv_bmc', emoji: '🎵' },
+            ]
+        };
+
+        let video = document.getElementById('video');
+        let canvas = document.getElementById('canvas');
+        let audioPlayer = document.getElementById('audioPlayer');
+        let modelsLoaded = false;
+        let detectionActive = false;
+        let currentMood = 'neutral';
+        let detectionInterval;
+
+        // Mood emoji mapping
+        const moodEmojis = {
+            sad: '😢',
+            neutral: '😐',
+            happy: '😊',
+            angry: '😠'
+        };
+
+        // Load face-api models
+        async function loadModels() {
+            try {
+                updateStatus('Loading AI models...');
+                const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/';
+
+                await Promise.all([
+                    faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+                    faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+                ]);
+
+                modelsLoaded = true;
+                updateStatus('✅ Models loaded! Ready to detect moods');
+                document.getElementById('startBtn').disabled = false;
+            } catch (error) {
+                updateStatus(`Error loading models: ${error.message}`, true);
+            }
+        }
+
+        // Start camera
+        async function startCamera() {
+            try {
+                updateStatus('Starting camera...');
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }
+                });
+
+                video.srcObject = stream;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('stopBtn').disabled = false;
+
+                updateStatus('✅ Camera started! Face detection active');
+                startDetection();
+            } catch (error) {
+                updateStatus(`Camera error: ${error.message}`, true);
+            }
+        }
+
+        // Stop camera
+        function stopCamera() {
+            try {
+                // Safely stop video stream
+                if (video.srcObject) {
+                    const stream = video.srcObject;
+                    const tracks = stream.getTracks();
+                    tracks.forEach(track => track.stop());
+                    video.srcObject = null;
+                }
+
+                // Reset buttons
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('stopBtn').disabled = true;
+
+                // Stop detection
+                detectionActive = false;
+                clearInterval(detectionInterval);
+
+                // Stop audio player
+                if (audioPlayer) {
+                    audioPlayer.pause();
+                    audioPlayer.currentTime = 0;
+                }
+
+                // Stop YouTube iframe
+                const container = document.querySelector('.now-playing');
+                if (container) {
+                    const iframe = container.querySelector('iframe');
+                    if (iframe) {
+                        iframe.src = '';
+                    }
+                }
+
+                // Reset display
+                const nowPlayingText = document.getElementById('nowPlayingText');
+                if (nowPlayingText) {
+                    nowPlayingText.textContent = 'Nothing yet...';
+                }
+
+                if (audioPlayer) {
+                    audioPlayer.style.display = 'block';
+                }
+
+                updateStatus('Camera stopped');
+            } catch (error) {
+                console.error('Error stopping camera:', error);
+                updateStatus('Error stopping camera', true);
+            }
+        }
+
+        // Detect face and emotion
+        async function startDetection() {
+            detectionActive = true;
+
+            detectionInterval = setInterval(async () => {
+                if (!detectionActive) return;
+
+                try {
+                    const detections = await faceapi
+                        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions())
+                        .withFaceExpressions();
+
+                    if (detections.length > 0) {
+                        const expressions = detections[0].expressions;
+                        const mood = getMoodFromExpressions(expressions);
+
+                        if (mood !== currentMood) {
+                            currentMood = mood;
+                            autoPlayMood(mood);
+                        }
+
+                        updateMoodDisplay(mood, expressions);
+                    } else {
+                        document.getElementById('moodText').textContent = 'No face detected';
+                        document.getElementById('moodEmoji').textContent = '👀';
+                        document.getElementById('moodConfidence').textContent = '';
+                    }
+                } catch (error) {
+                    console.error('Detection error:', error);
+                }
+            }, 500);
+        }
+
+        // Determine mood from facial expressions
+        function getMoodFromExpressions(expressions) {
+            const moods = {
+                sad: expressions.sad || 0,
+                happy: expressions.happy || 0,
+                angry: expressions.angry || 0,
+                neutral: expressions.neutral || 0
+            };
+
+            let maxMood = 'neutral';
+            let maxValue = 0;
+
+            for (let mood in moods) {
+                if (moods[mood] > maxValue) {
+                    maxValue = moods[mood];
+                    maxMood = mood;
+                }
+            }
+
+            return maxMood;
+        }
+
+        // Update mood display
+        function updateMoodDisplay(mood, expressions) {
+            const moodText = document.getElementById('moodText');
+            const moodEmoji = document.getElementById('moodEmoji');
+            const confidence = document.getElementById('moodConfidence');
+
+            const confidence_value = (expressions[mood] * 100).toFixed(1);
+
+            moodText.textContent = mood;
+            moodEmoji.textContent = moodEmojis[mood];
+            confidence.textContent = `Confidence: ${confidence_value}%`;
+        }
+
+        // Auto play mood
+        function autoPlayMood(mood) {
+            playMood(mood);
+        }
+
+        // Play music for selected mood
+        function playMood(mood) {
+            const songs = musicDatabase[mood];
+            if (songs && songs.length > 0) {
+                const randomSong = songs[Math.floor(Math.random() * songs.length)];
+
+                // Check if it's a YouTube link
+                if (randomSong.url.startsWith('youtube:')) {
+                    const videoId = randomSong.url.replace('youtube:', '');
+                    playQuickYoutube(videoId);
+                } else {
+                    audioPlayer.src = randomSong.url;
+                    document.getElementById('nowPlayingText').textContent =
+                        `${randomSong.emoji} ${randomSong.name}`;
+
+                    audioPlayer.play().catch(error => {
+                        updateStatus(`Playback error: ${error.message}`, true);
+                    });
+                }
+
+                updateMoodButtons(mood);
+            }
+        }
+
+        // Update mood button styles
+        function updateMoodButtons(mood) {
+            document.querySelectorAll('.mood-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event?.target?.classList?.add('active');
+        }
+
+        // Update status
+        function updateStatus(message, isError = false) {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.classList.toggle('error', isError);
+        }
+
+        // Play YouTube Music
+        function playYoutubeMusic() {
+            try {
+                const youtubeUrl = document.getElementById('youtubeUrl').value.trim();
+
+                if (!youtubeUrl) {
+                    alert('Please paste a YouTube URL!');
+                    return;
+                }
+
+                // Extract video ID from YouTube URL
+                let videoId = '';
+                if (youtubeUrl.includes('youtube.com/watch?v=')) {
+                    videoId = youtubeUrl.split('v=')[1].split('&')[0];
+                } else if (youtubeUrl.includes('youtu.be/')) {
+                    videoId = youtubeUrl.split('youtu.be/')[1].split('?')[0];
+                }
+
+                if (!videoId) {
+                    alert('Invalid YouTube URL! Please use:\n- youtube.com/watch?v=VIDEO_ID\n- youtu.be/VIDEO_ID');
+                    return;
+                }
+
+                // Play the YouTube video
+                playQuickYoutube(videoId);
+
+                // Clear input
+                document.getElementById('youtubeUrl').value = '';
+            } catch (error) {
+                console.error('Error playing YouTube music:', error);
+                updateStatus('Error playing YouTube video', true);
+            }
+        }
+
+        // Update now playing from YouTube
+        function updateNowPlayingFromYoutube(videoId) {
+            try {
+                // Try to extract title from URL if possible
+                fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoId}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.title) {
+                            const nowPlayingText = document.getElementById('nowPlayingText');
+                            if (nowPlayingText) {
+                                nowPlayingText.textContent = `🎬 ${data.title}`;
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        const nowPlayingText = document.getElementById('nowPlayingText');
+                        if (nowPlayingText) {
+                            nowPlayingText.textContent = `🎬 YouTube Music Playing...`;
+                        }
+                    });
+            } catch (error) {
+                console.error('Error updating now playing:', error);
+            }
+        }
+
+        // Play Quick YouTube Link
+        function playQuickYoutube(videoId) {
+            try {
+                if (!videoId) {
+                    updateStatus('Invalid video ID', true);
+                    return;
+                }
+
+                const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+
+                const nowPlayingText = document.getElementById('nowPlayingText');
+                if (nowPlayingText) {
+                    nowPlayingText.textContent = `🎵 Playing Your Song...`;
+                }
+
+                if (audioPlayer) {
+                    audioPlayer.style.display = 'none';
+                }
+
+                // Create or update embedded player
+                const container = document.querySelector('.now-playing');
+                if (container) {
+                    const existingIframe = container.querySelector('iframe');
+                    if (existingIframe) {
+                        existingIframe.src = embedUrl;
+                    } else {
+                        const iframe = document.createElement('iframe');
+                        iframe.width = '100%';
+                        iframe.height = '200';
+                        iframe.src = embedUrl;
+                        iframe.frameBorder = '0';
+                        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+                        iframe.allowFullscreen = true;
+                        iframe.style.borderRadius = '8px';
+                        iframe.style.marginTop = '15px';
+                        container.appendChild(iframe);
+                    }
+                }
+
+                // Get video title
+                updateNowPlayingFromYoutube(videoId);
+            } catch (error) {
+                console.error('Error playing YouTube:', error);
+                updateStatus('Error playing video', true);
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', () => {
+            loadModels();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            stopCamera();
+        });
+    </script>
+</body>
+
+</html>
